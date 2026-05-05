@@ -56,6 +56,16 @@ inductive Val where
   | clos: (env: List (String × Val)) → (exp: Exp) → Val
   deriving Repr
 
+partial def Val.toString (v : Val) : String :=
+  match v with
+  | Val.typ n => s!"Type{n}"
+  | Val.gen i => s!"g{i}"
+  | Val.app cmd arg => s!"({Val.toString cmd} {Val.toString arg})"
+  | Val.clos _ exp => s!"{exp}"
+
+instance : ToString Val where
+  toString := Val.toString
+
 -- Util
 partial def lookup? (env: List (String × α)) (query: String): Option α :=
   match env with

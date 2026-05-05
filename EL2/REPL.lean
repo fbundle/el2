@@ -28,15 +28,25 @@ def State.pop (s : State) : State :=
   | (e, ps) :: rest => { rootExp := e, proofStates := ps, history := rest }
 
 def getStep (s : State) (msg : Option String := none) : REPL.Step State :=
+  let help := [
+    "EL2 Tactic REPL",
+    "Available tactics:",
+    "  intro <name>  - Introduce a variable from a Pi type",
+    "  exact <term>  - Close the goal with a specific term",
+    "  assumption    - Automatically find a variable in context",
+    "  undo          - Undo the last tactic",
+    ""
+  ]
   let out : List String :=
+    (if s.history.isEmpty then help else []) ++
     match s.proofStates with
     | [] => ["All goals accomplished!"]
     | ps :: _ =>
       match ps.goals with
       | [] => ["Current proof state finished."]
       | g :: _ =>
-        let hyps := g.ctx.Γ.reverse.map (λ (n, v) => s!"{n} : {repr v}")
-        let target := s!"\n-------------------------------------------------------------------\n{repr g.target}"
+        let hyps := g.ctx.Γ.reverse.map (λ (n, v) => s!"{n} : {v}")
+        let target := s!"\n-------------------------------------------------------------------\n{g.target}"
         hyps ++ [target]
   
   let err := match msg with | some m => [m] | none => []
