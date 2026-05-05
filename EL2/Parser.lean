@@ -277,7 +277,13 @@ partial def parse: Parser (List Char) Exp := λ xs =>
     parseHom || -- starts with hom
     parseBnd || -- starts with let
     parseInh || -- starts with inh
+    parseHole || -- starts with ?
     parseVar    -- everything else
+  )
+
+partial def parseHole: Parser (List Char) Exp :=
+  (String.exact "?" ++ (parseName.either (Combinator.pure ""))).map (λ (_, _) =>
+    Exp.hole 0
   )
 
 end

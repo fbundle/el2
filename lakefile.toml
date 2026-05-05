@@ -6,8 +6,15 @@ defaultTargets = ["Main.lean"]
 [[lean_lib]]
 name = "EL2"
 
+[[lean_lib]]
+name = "REPL"
+
 
 
 [[lean_exe]]
 name = "Main.lean"
 root = "Main"
+
+[[lean_exe]]
+name = "TacticREPL.lean"
+root = "TacticREPL"

@@ -23,7 +23,23 @@ inductive Exp where
   | bnd: (name: String) → (value: Exp) → (type: Exp) → (body: Exp) → Exp
   -- inh - const
   | inh: (name: String) → (type: Exp) → (body: Exp) → Exp
+  -- hole for tactics
+  | hole: (id: Nat) → Exp
   deriving Repr
+
+def Exp.toString (e : Exp) : String :=
+  match e with
+  | Exp.typ n => s!"Type{n}"
+  | Exp.var name => name
+  | Exp.app cmd arg => s!"({Exp.toString cmd} {Exp.toString arg})"
+  | Exp.pi name typeA typeB => s!"(hom ({name} : {Exp.toString typeA}) -> {Exp.toString typeB})"
+  | Exp.lam name body => s!"(lam {name} => {Exp.toString body})"
+  | Exp.bnd name value type body => s!"let {name} : {Exp.toString type} := {Exp.toString value}\n{Exp.toString body}"
+  | Exp.inh name type body => s!"inh {name} : {Exp.toString type}\n{Exp.toString body}"
+  | Exp.hole _ => "?"
+
+instance : ToString Exp where
+  toString := Exp.toString
 
 end EL2
 
