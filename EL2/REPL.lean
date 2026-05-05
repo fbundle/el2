@@ -46,7 +46,7 @@ def getStep (s : State) (msg : Option String := none) : REPL.Step State :=
       | [] => ["Current proof state finished."]
       | g :: _ =>
         let hyps := g.ctx.Γ.reverse.map (λ (n, v) => s!"{n} : {v}")
-        let target := s!"\n-------------------------------------------------------------------\n{g.target}"
+        let target := s!"\n-------------------------------------------------------------------\n⊢ {g.target}"
         hyps ++ [target]
   
   let err := match msg with | some m => [m] | none => []
