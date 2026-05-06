@@ -85,6 +85,8 @@ partial def reduce? (env: List (String × Val)) (e: Exp): Option Val :=
       let value := Val.const name
       reduce? (update env name value) body
 
+    | Exp.hole _ => none
+
 end EL2.Reducer
 
 namespace EL2
