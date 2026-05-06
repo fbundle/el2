@@ -29,7 +29,8 @@ def chainLam (names: List String) (body: Exp): Exp :=
       Exp.lam name (chainLam names body)
 
 def parseName: ParseFunc (List Char) String :=
-  String.toStringParseFunc $ (pred ("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.".contains ·)).repeatSome
+  let parseChar: ParseFunc (List Char) Char := pred ("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.".contains ·)
+  String.toStringParseFunc $ parseChar.repeatSome
 
 
 mutual
@@ -37,53 +38,64 @@ mutual
 partial def parseApp: ParseFunc (List Char) Exp :=
   -- parse any thing starts with (
   (
-    String.exact "(" ++
-    String.whitespaceWeak ++
-    parse ++
-    (String.whitespace ++ parse).repeatAny ++
-    String.whitespaceWeak ++
-    String.exact ")"
+    String.exact "(" ++ String.anyWs ++
+    parseExp ++ (String.someWs ++ parseExp).repeatAny ++
+    String.anyWs ++ String.exact ")"
   ).map (λ (_, _, cmd, args, _, _) =>
     chainCmd cmd (args.map Prod.snd)
   )
 
 partial def parseHom: ParseFunc (List Char) Exp :=
   let parseAnn: ParseFunc (List Char) (String × Exp) :=
-      (
-        String.exact "(" ++
-        String.whitespaceWeak ++
-        parseName ++
-        String.whitespaceWeak ++
-        String.exact ":" ++
-        String.whitespaceWeak ++
-        parse ++
-        String.whitespaceWeak ++
-        String.exact ")"
-      ).map (λ (_, _, name, _, _, _, type, _, _) => (name, type))
+    -- either (name: type) or type
+    (
+      String.exact "("++
+      String.anyWs ++
+      parseName ++
+      String.anyWs ++
+      String.exact ":" ++
+      String.anyWs ++
+      parseExp ++
+      String.anyWs ++
+      String.exact ")"
+    ).map (λ (_, _, name, _, _, _, type, _, _) => (name, type))
 
-      || parse.map (λ e => ("_", e))
+    || parseExp.map (λ e => ("_", e))
 
-  (
+  -- hom ann^n -> typeB
+  let x: ParseFunc (List Char) Exp := (
     String.exact "hom" ++
-    (String.whitespaceWeak ++ parseAnn).repeatAny ++
-    String.whitespaceWeak ++
+    (String.anyWs ++ parseAnn).repeatAny ++
+    String.anyWs ++
     String.exact "->" ++
-    String.whitespaceWeak ++
-    parse
+    String.anyWs ++
+    parseExp
   ).map (λ (_, params, _, _, _, typeB) =>
     chainPi (params.map (λ (_, name, typeA) => (name, typeA))) typeB
   )
+
+  -- hom [(ann ->)^n -> type B]
+  let y: ParseFunc (List Char) Exp := (
+    String.exact "[" ++
+    (String.anyWs ++ parseAnn ++ String.anyWs ++ String.exact "->").repeatAny ++
+    String.anyWs ++ parseExp ++ String.anyWs ++
+    String.exact "]"
+  ).map (λ (_, params, _, typeB, _, _) =>
+    chainPi (params.map (λ (_, (name, typeA), _, _) => (name, typeA))) typeB
+  )
+
+  x || y
 
 partial def parseLam: ParseFunc (List Char) Exp :=
   -- parse anything starts with lam
   -- lam name [ name]^n => body
   (
     String.exact "lam" ++
-    (String.whitespace ++ parseName).repeatAny ++
-    String.whitespace ++
+    (String.someWs ++ parseName).repeatAny ++
+    String.someWs ++
     String.exact "=>" ++
-    String.whitespace ++
-    parse
+    String.someWs ++
+    parseExp
   ).map (λ (_, names, _, _, _, body) =>
     chainLam (names.map Prod.snd) body
   )
@@ -99,11 +111,12 @@ partial def parseUniv: ParseFunc (List Char) Exp := λ xs => do
   else
     none
 
-partial def parseVar: ParseFunc (List Char) Exp := parseName
+partial def parseVar: ParseFunc (List Char) Exp :=
+  let specialNames := [
+    "lam", "let", "inh", "hom"
+  ]
+  parseName
   |> (·.filter (λ name =>
-    let specialNames := [
-      "lam", "let", "inh", "hom"
-    ]
     ¬ specialNames.contains name
   ))
   |> (·.map (λ name => Exp.var name))
@@ -112,57 +125,58 @@ partial def parseVar: ParseFunc (List Char) Exp := parseName
 partial def parseBnd: ParseFunc (List Char) Exp :=
   -- parse anything starts with let
   -- typed let
-  (
+  let x: ParseFunc (List Char) Exp := (
     String.exact "let" ++
-    String.whitespaceWeak ++
+    String.anyWs ++
     parseName ++
-    String.whitespaceWeak ++
+    String.anyWs ++
     String.exact ":" ++
-    String.whitespaceWeak ++
-    parse ++
-    String.whitespaceWeak ++
+    String.anyWs ++
+    parseExp ++
+    String.anyWs ++
     String.exact ":=" ++
-    String.whitespaceWeak ++
-    parse ++
+    String.anyWs ++
+    parseExp ++
     parseLineBreak ++
-    parse
+    parseExp
   ).map (λ (_, _, name, _, _, _, type, _, _, _, value, _, body) =>
     Exp.bnd name value type body
   )
-  ||
 
   -- untyped let
-  (
+  let y: ParseFunc (List Char) Exp := (
     String.exact "let" ++
-    String.whitespaceWeak ++
+    String.anyWs ++
     parseName ++
-    String.whitespaceWeak ++
+    String.anyWs ++
     String.exact ":=" ++
-    String.whitespaceWeak ++
-    parse ++
+    String.anyWs ++
+    parseExp ++
     parseLineBreak ++
-    parse
+    parseExp
   ).map (λ (_, _, name, _, _, _, value, _, body) =>
     Exp.app (Exp.lam name body) value
   )
+
+  x || y
 
 partial def parseInh: ParseFunc (List Char) Exp :=
   -- parse anything starts with inh
   (
     String.exact "inh" ++
-    String.whitespaceWeak ++
+    String.anyWs ++
     parseName ++
-    String.whitespaceWeak ++
+    String.anyWs ++
     String.exact ":" ++
-    String.whitespaceWeak ++
-    parse ++
+    String.anyWs ++
+    parseExp ++
     parseLineBreak ++
-    parse
+    parseExp
   ).map (λ (_, _, name, _, _, _, type, _, body) =>
     Exp.inh name type body
   )
 
-partial def parse: ParseFunc (List Char) Exp := λ xs =>
+partial def parseExp: ParseFunc (List Char) Exp := λ xs =>
   --dbg_trace s!"[DBG_TRACE] parsing {repr xs}"
   xs |>
   (
@@ -178,11 +192,11 @@ partial def parse: ParseFunc (List Char) Exp := λ xs =>
 end
 
 
-end EL2.ParseFunc
+end EL2.Parser
 
 namespace EL2
 open EL2
-open EL2.ParseFuncCombinator
+open EL2.ParserCombinator
 
 private inductive state where
   | normal: Array Char → state
@@ -210,9 +224,9 @@ heheh
 def parse: ParseFunc (List Char) Exp := λ xs =>
   xs |> removeComments |>
   (
-    String.whitespaceWeak ++
-    ParseFunc.parse ++
-    String.whitespaceWeak
+    String.anyWs ++
+    Parser.parseExp ++
+    String.anyWs
   ).map (λ (_, e, _) => e)
 
 
