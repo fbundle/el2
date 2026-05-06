@@ -95,7 +95,7 @@ tactic is a useful tool for interactive theorem prover / backward reasoning. For
 -- all goals accomplished!
 ```
 
-One can also implement tactics in CoC and encode logic into CoC (this is what theorem provers use to encode mathematics into their type theories: dependent types, universes, recursive types, etc). An example of tactic we can implement for EL2 is as follows
+One can also implement tactics in CoC and encode logic into CoC (this is what interactive theorem provers (ITPs) use to encode mathematics into their type theories: dependent types, universes, recursive types, etc). An example of tactic we can implement for EL2 is as follows
 
 ```el2
 Bool: Type0
@@ -129,7 +129,7 @@ split into 4 subgoals and 1 compose subgoal
 
 ```el2
 ...
-⊢ T               -- value of x (should be the tail of the goal vector)
+⊢ T               -- value of x (should be tail of the goal vector)
 ```
 
 ```el2
@@ -137,7 +137,18 @@ split into 4 subgoals and 1 compose subgoal
 ⊢ (Vec (succ n) T) = (Vec 3 Bool)    -- a proof for these two types being identical
 ```
 
-this is how we construct `Vec 3 Bool` backward
+this is how we construct `Vec 3 Bool` backward. Usually in ITPs, they automate some of this so that in the end, we only have two subgoals
+
+
+```el2
+...
+⊢ Bool               -- tail of the goal vector
+```
+
+```el2
+...
+⊢ (Vec 2 Bool)       -- a vector of 2 booleans
+```
 
 ### ENCODE PROPOSITION LOGIC INTO EL2
 
