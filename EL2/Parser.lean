@@ -11,14 +11,12 @@ def parseLineBreak :=
   String.anyWs
 
 def chainCmd (cmd: Exp) (args: List Exp): Exp :=
-  -- left assoc
   match args with
     | [] => cmd
     | arg :: args =>
       chainCmd (Exp.app cmd arg) args
 
 def chainPi (anns: List (String × Exp)) (last: Exp): Exp :=
-  -- right assoc
   match anns with
     | [] => last
     | (name, type) :: anns =>
