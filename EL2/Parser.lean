@@ -186,10 +186,6 @@ namespace EL2
 open EL2
 open EL2.ParserCombinator
 
-private inductive state where
-  | normal: Array Char → state
-  | inComment: Array Char → state
-
 private def removeComments (xs: List Char): List Char :=
   let s := String.mk xs
   let lines := s.splitOn "\n"
