@@ -1,113 +1,12 @@
+import EL2.ParserCombinator
 import EL2.Typer
 
-namespace EL2.Parser.Combinator
-
-def Parser χ α  := χ → Option (χ × α)
-
-def fail : Parser χ α := λ _ => none
-
-def pure (a: α): Parser χ α := λ xs =>
-  some (xs, a)
-
-def Parser.bind (p: Parser χ α) (f: α → Parser χ β): Parser χ β := λ xs => do
-  let (xs, a) ← p xs
-  f a xs
-
-instance: Monad (Parser α) where
-  pure := pure
-  bind := Parser.bind
-
-def Parser.filter (p: Parser χ α) (f: α → Bool): Parser χ α :=
-  p.bind (λ a => if f a then pure a else fail)
-
-def Parser.map (p: Parser χ α) (f: α → β): Parser χ β :=
-  p.bind (λ a => pure (f a))
-
-def Parser.concat (p1: Parser χ α) (p2: Parser χ β): Parser χ (α × β) := λ xs => do
-  let (xs, a) ← p1 xs
-  let (xs, b) ← p2 xs
-  some (xs, (a, b))
-
-infixr: 60 " ++ " => Parser.concat
-
-def Parser.either (p1: Parser χ α) (p2: Parser χ α): Parser χ α := λ xs =>
-  match p1 xs with
-    | some (xs, a) => some (xs, a)
-    | none => p2 xs
-
-infixr: 50 " || " => Parser.either -- lower precedence than concat
-
-partial def Parser.many (p: Parser χ α): Parser χ (List α) := λ xs =>
-  let rec loop (as: Array α) (xs: χ): Option (χ × List α) :=
-    match p xs with
-      | none => some (xs, as.toList)
-      | some (rest, a) => loop (as.push a) rest
-  loop #[] xs
-
-def Parser.many1 (p: Parser χ α): Parser χ (List α) := λ xs => do
-  let (xs, as) ← p.many xs
-  if as.length = 0 then
-    none
-  else
-    some (xs, as)
-
-def Parser.transpose (ps: List (Parser χ α)): Parser χ (List α) := λ xs =>
-  let rec loop (ys: Array α) (ps: List (Parser χ α)) (xs: χ): Option (χ × List α) :=
-    match ps with
-      | [] => some (xs, ys.toList)
-      | p :: ps =>
-        match p xs with
-          | none => none
-          | some (xs, y) =>
-            loop (ys.push y) ps xs
-  loop #[] ps xs
 
 
-def pred (p: χ → Bool): Parser (List χ) χ := λ xs =>
-  match xs with
-    | [] => none
-    | x :: xs =>
-      if p x then
-        some (xs, x)
-      else
-        none
 
-def exact [BEq χ] (y: χ): Parser (List χ) χ := pred (· == y)
-
-def exactList [BEq χ] (ys: List χ): Parser (List χ) (List χ) :=
-  Parser.transpose (ys.map exact)
-
-namespace String
-
-def toStringParser (p: Parser (List Char) (List Char)): Parser (List Char) String :=
-  p.map (String.mk ·)
-
-def whitespaceWeak : Parser (List Char) String :=
-  -- parse any whitespace
-  -- empty whitespace is ok
-  toStringParser (pred (·.isWhitespace)).many
-
-def whiteSpaceWithoutNewLineWeak : Parser (List Char) String :=
-  -- parse any whitespace but not new line
-  -- empty whitespace is ok
-  toStringParser (pred (λ c => c.isWhitespace ∧ (¬ c = '\n'))).many
-
-
-def whitespace : Parser (List Char) String :=
-  -- parse some whitespace
-  -- empty whitespace is not ok
-  toStringParser (pred (·.isWhitespace)).many1
-
-def exact (ys: String): Parser (List Char) String :=
-  toStringParser (exactList ys.toList)
-
-end String
-
-end EL2.Parser.Combinator
-
-namespace EL2.Parser
+namespace EL2.ParseFunc
 open EL2
-open EL2.Parser.Combinator
+open EL2.ParserCombinator
 
 def parseLineBreak :=
   -- <whitespace_without_newline> <newline> <writespace>
@@ -133,27 +32,27 @@ def chainLam (names: List String) (body: Exp): Exp :=
     | name :: names =>
       Exp.lam name (chainLam names body)
 
-def parseName: Parser (List Char) String :=
-  String.toStringParser $ (pred ("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.".contains ·)).many1
+def parseName: ParseFunc (List Char) String :=
+  String.toStringParseFunc $ (pred ("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.".contains ·)).repeatSome
 
 
 mutual
 
-partial def parseApp: Parser (List Char) Exp :=
+partial def parseApp: ParseFunc (List Char) Exp :=
   -- parse any thing starts with (
   (
     String.exact "(" ++
     String.whitespaceWeak ++
     parse ++
-    (String.whitespace ++ parse).many ++
+    (String.whitespace ++ parse).repeatAny ++
     String.whitespaceWeak ++
     String.exact ")"
   ).map (λ (_, _, cmd, args, _, _) =>
     chainCmd cmd (args.map Prod.snd)
   )
 
-partial def parseHom: Parser (List Char) Exp :=
-  let parseAnn: Parser (List Char) (String × Exp) :=
+partial def parseHom: ParseFunc (List Char) Exp :=
+  let parseAnn: ParseFunc (List Char) (String × Exp) :=
       (
         String.exact "(" ++
         String.whitespaceWeak ++
@@ -170,7 +69,7 @@ partial def parseHom: Parser (List Char) Exp :=
 
   (
     String.exact "hom" ++
-    (String.whitespaceWeak ++ parseAnn).many ++
+    (String.whitespaceWeak ++ parseAnn).repeatAny ++
     String.whitespaceWeak ++
     String.exact "->" ++
     String.whitespaceWeak ++
@@ -179,12 +78,12 @@ partial def parseHom: Parser (List Char) Exp :=
     chainPi (params.map (λ (_, name, typeA) => (name, typeA))) typeB
   )
 
-partial def parseLam: Parser (List Char) Exp :=
+partial def parseLam: ParseFunc (List Char) Exp :=
   -- parse anything starts with lam
   -- lam name [ name]^n => body
   (
     String.exact "lam" ++
-    (String.whitespace ++ parseName).many ++
+    (String.whitespace ++ parseName).repeatAny ++
     String.whitespace ++
     String.exact "=>" ++
     String.whitespace ++
@@ -193,7 +92,7 @@ partial def parseLam: Parser (List Char) Exp :=
     chainLam (names.map Prod.snd) body
   )
 
-partial def parseUniv: Parser (List Char) Exp := λ xs => do
+partial def parseUniv: ParseFunc (List Char) Exp := λ xs => do
   let (rest, name) ← parseName xs
   if "Type".isPrefixOf name then
     let levelStr := name.stripPrefix "Type"
@@ -204,7 +103,7 @@ partial def parseUniv: Parser (List Char) Exp := λ xs => do
   else
     none
 
-partial def parseVar: Parser (List Char) Exp := parseName
+partial def parseVar: ParseFunc (List Char) Exp := parseName
   |> (·.filter (λ name =>
     let specialNames := [
       "lam", "let", "inh", "hom"
@@ -214,7 +113,7 @@ partial def parseVar: Parser (List Char) Exp := parseName
   |> (·.map (λ name => Exp.var name))
 
 
-partial def parseBnd: Parser (List Char) Exp :=
+partial def parseBnd: ParseFunc (List Char) Exp :=
   -- parse anything starts with let
   -- typed let
   (
@@ -251,7 +150,7 @@ partial def parseBnd: Parser (List Char) Exp :=
     Exp.app (Exp.lam name body) value
   )
 
-partial def parseInh: Parser (List Char) Exp :=
+partial def parseInh: ParseFunc (List Char) Exp :=
   -- parse anything starts with inh
   (
     String.exact "inh" ++
@@ -267,7 +166,7 @@ partial def parseInh: Parser (List Char) Exp :=
     Exp.inh name type body
   )
 
-partial def parse: Parser (List Char) Exp := λ xs =>
+partial def parse: ParseFunc (List Char) Exp := λ xs =>
   --dbg_trace s!"[DBG_TRACE] parsing {repr xs}"
   xs |>
   (
@@ -283,11 +182,11 @@ partial def parse: Parser (List Char) Exp := λ xs =>
 end
 
 
-end EL2.Parser
+end EL2.ParseFunc
 
 namespace EL2
 open EL2
-open EL2.Parser.Combinator
+open EL2.ParseFuncCombinator
 
 private inductive state where
   | normal: Array Char → state
@@ -312,11 +211,11 @@ an mesage with line comment -- everythign after double dashes is ignore
 heheh
 ".toList)
 
-def parse: Parser (List Char) Exp := λ xs =>
+def parse: ParseFunc (List Char) Exp := λ xs =>
   xs |> removeComments |>
   (
     String.whitespaceWeak ++
-    Parser.parse ++
+    ParseFunc.parse ++
     String.whitespaceWeak
   ).map (λ (_, e, _) => e)
 
