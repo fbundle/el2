@@ -54,5 +54,5 @@ let x : Bool := (is_zero zero)
 let y : Bool := (is_zero one)
 let z : Bool := (is_zero two)
 
-Type0
+Type0 -- always ends with Type0
 
