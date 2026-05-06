@@ -1,26 +1,24 @@
 import EL2.ParserCombinator
 import EL2.Typer
 
-
-
-
-namespace EL2.ParseFunc
-open EL2
+namespace EL2.Parser
 open EL2.ParserCombinator
 
 def parseLineBreak :=
   -- <whitespace_without_newline> <newline> <writespace>
-  String.whiteSpaceWithoutNewLineWeak ++
+  String.anyWsNoNL ++
   (String.exact "\n" || String.exact ";") ++
-  String.whitespaceWeak
+  String.anyWs
 
 def chainCmd (cmd: Exp) (args: List Exp): Exp :=
+  -- left assoc
   match args with
     | [] => cmd
     | arg :: args =>
       chainCmd (Exp.app cmd arg) args
 
 def chainPi (anns: List (String × Exp)) (last: Exp): Exp :=
+  -- right assoc
   match anns with
     | [] => last
     | (name, type) :: anns =>
