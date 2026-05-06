@@ -62,8 +62,8 @@ partial def parseHom: ParseFunc (List Char) Exp :=
 
     || parseExp.map (λ e => ("_", e))
 
-  -- hom ann^n -> typeB
-  let x: ParseFunc (List Char) Exp := (
+  -- hom ann^n typeB
+  (
     String.exact "hom" ++
     (String.anyWs ++ parseAnn).repeatAny ++
     String.anyWs ++
@@ -73,18 +73,6 @@ partial def parseHom: ParseFunc (List Char) Exp :=
   ).map (λ (_, params, _, _, _, typeB) =>
     chainPi (params.map (λ (_, name, typeA) => (name, typeA))) typeB
   )
-
-  -- hom [(ann ->)^n -> type B]
-  let y: ParseFunc (List Char) Exp := (
-    String.exact "[" ++
-    (String.anyWs ++ parseAnn ++ String.anyWs ++ String.exact "->").repeatAny ++
-    String.anyWs ++ parseExp ++ String.anyWs ++
-    String.exact "]"
-  ).map (λ (_, params, _, typeB, _, _) =>
-    chainPi (params.map (λ (_, (name, typeA), _, _) => (name, typeA))) typeB
-  )
-
-  x || y
 
 partial def parseLam: ParseFunc (List Char) Exp :=
   -- parse anything starts with lam
