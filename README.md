@@ -95,7 +95,7 @@ tactic is a useful tool for interactive theorem prover / backward reasoning. For
 -- all goals accomplished!
 ```
 
-One can also implement tactics in CIC and encode logic into CIC (this is what theorem provers use to encode mathematics into their type theories: dependent types, universes, recursive types, etc). An example of tactic we can implement for EL2 is as follows
+One can also implement tactics in CoC and encode logic into CoC (this is what theorem provers use to encode mathematics into their type theories: dependent types, universes, recursive types, etc). An example of tactic we can implement for EL2 is as follows
 
 ```el2
 Bool: Type0
