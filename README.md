@@ -150,6 +150,8 @@ this is how we construct `Vec 3 Bool` backward. Usually in ITPs, they automate s
 ⊢ (Vec 2 Bool)       -- a vector of 2 booleans
 ```
 
+Somehow, `succ` being injective is encoded into the kernel
+
 ### ENCODE PROPOSITION LOGIC INTO EL2
 
 since we can encode inductive types into `EL2`, propositional logic follows
