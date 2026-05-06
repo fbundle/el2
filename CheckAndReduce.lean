@@ -11,7 +11,7 @@ def lift (err: String) (o?: Option α) : Except String α :=
     | none => Except.error err
     | some v => Except.ok v
 
-def parseCheckReduce (source: String): Except String String := do
+def parseCheckAndReduce (source: String): Except String String := do
   let (xs, e) ← lift "parse_error" $ parse source.toList
   let b ← lift "type_error" $ typeCheck? e t
   if ¬ b then
@@ -23,9 +23,9 @@ def parseCheckReduce (source: String): Except String String := do
 def main (args : List String): IO Unit := do
   IO.println "-------------------------------------------------------------------"
   match args with
-    | [] => IO.println "args_empty: use `el2 <filename>`"
+    | [] => IO.println "args_empty: use `lake exe CheckAndReduce.lean <filename>`"
     | filename :: _ =>
       let source ← IO.FS.readFile filename
-      match parseCheckReduce source with
+      match parseCheckAndReduce source with
         | Except.ok s => IO.println s
         | Except.error err => IO.println err
