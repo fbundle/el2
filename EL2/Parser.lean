@@ -71,7 +71,7 @@ partial def parseHom: ParseFunc (List Char) Exp :=
     String.anyWs ++
     parseExp
   ).map (λ (_, params, _, _, _, typeB) =>
-    chainPi (params.map (λ (_, name, typeA) => (name, typeA))) typeB
+    chainPi (params.map (λ (_, (name, typeA)) => (name, typeA))) typeB
   )
 
 partial def parseLam: ParseFunc (List Char) Exp :=
