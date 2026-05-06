@@ -2,9 +2,9 @@ import EL2.Parser
 import EL2.Typer
 import EL2.Reducer
 
-open EL2
 
-def t := Exp.typ 1
+
+def t := EL2.Exp.typ 1
 
 def lift (err: String) (o?: Option α) : Except String α :=
   match o? with
@@ -12,12 +12,12 @@ def lift (err: String) (o?: Option α) : Except String α :=
     | some v => Except.ok v
 
 def parseCheckAndReduce (source: String): Except String String := do
-  let (xs, e) ← lift "parse_error" $ parse source.toList
-  let b ← lift "type_error" $ typeCheck? e t
+  let (xs, e) ← lift "parse_error" $ EL2.parse source.toList
+  let b ← lift "type_error" $ EL2.typeCheck? e t
   if ¬ b then
     Except.error "type_error"
   else
-  let re ← lift "reduce_error" $ reduce? e
+  let re ← lift "reduce_error" $ EL2.reduce? e
   Except.ok s!"[OK] {re}\n[REMAINING] {xs}"
 
 def main (args : List String): IO Unit := do
