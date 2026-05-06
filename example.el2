@@ -8,7 +8,7 @@ inh false : Bool
 -- induction will be automatically generated
 
 inh Nat : Type0
-inh zero : Nat
+inh zero : [Nat]
 inh succ : hom Nat -> Nat
 
 inh Nat_rec : hom
