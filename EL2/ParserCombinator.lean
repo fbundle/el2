@@ -80,16 +80,16 @@ namespace String
 def toStringParseFunc (p: ParseFunc (List Char) (List Char)): ParseFunc (List Char) String :=
   p.map (String.mk ·)
 
-def whitespaceWeak : ParseFunc (List Char) String :=
+def whitespaceAny : ParseFunc (List Char) String :=
   -- parse any whitespace or empty string
   toStringParseFunc (pred (·.isWhitespace)).repeatAny
 
-def whiteSpaceWithoutNewLineWeak : ParseFunc (List Char) String :=
+def whiteSpaceWithoutNewLineAny : ParseFunc (List Char) String :=
   -- parse any whitespace without new line or empty string
   toStringParseFunc (pred (λ c => c.isWhitespace ∧ (¬ c = '\n'))).repeatAny
 
 
-def whitespace : ParseFunc (List Char) String :=
+def whitespaceSome : ParseFunc (List Char) String :=
   -- parse some whitespace
   toStringParseFunc (pred (·.isWhitespace)).repeatSome
 
