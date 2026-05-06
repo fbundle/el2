@@ -9,15 +9,13 @@ inh false : Bool
 
 inh Nat : Type0
 inh zero : Nat
-inh succ : [Nat -> Nat]
+inh succ : hom Nat -> Nat
 
-inh Nat_rec : [
-  (P : [Nat -> Type0]) ->
-  (base_case: (P zero)) ->
-  (ind_case: [ (m : Nat) -> (P_m: (P m)) -> (P (succ m))] ) ->
-  (n: Nat) ->
-  (P n)
-]
+inh Nat_rec : hom
+  (P : hom Nat -> Type0)
+  (base_case: (P zero))
+  (ind_case: hom (m : Nat) (P_m: (P m)) -> (P (succ m)))
+  (n: Nat) -> (P n)
 
 -- assume (Vec n T) exists for all type (T: Type0)
 inh Vec : hom Nat Type0 -> Type0
