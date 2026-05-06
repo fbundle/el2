@@ -81,19 +81,16 @@ def toStringParseFunc (p: ParseFunc (List Char) (List Char)): ParseFunc (List Ch
   p.map (String.mk ·)
 
 def whitespaceWeak : ParseFunc (List Char) String :=
-  -- parse any whitespace
-  -- empty whitespace is ok
+  -- parse any whitespace or empty string
   toStringParseFunc (pred (·.isWhitespace)).repeatAny
 
 def whiteSpaceWithoutNewLineWeak : ParseFunc (List Char) String :=
-  -- parse any whitespace but not new line
-  -- empty whitespace is ok
+  -- parse any whitespace without new line or empty string
   toStringParseFunc (pred (λ c => c.isWhitespace ∧ (¬ c = '\n'))).repeatAny
 
 
 def whitespace : ParseFunc (List Char) String :=
   -- parse some whitespace
-  -- empty whitespace is not ok
   toStringParseFunc (pred (·.isWhitespace)).repeatSome
 
 def exact (ys: String): ParseFunc (List Char) String :=
