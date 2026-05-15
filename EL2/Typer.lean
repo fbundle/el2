@@ -53,7 +53,6 @@ partial def lookup? (env: List (String × α)) (query: String): Option α :=
 partial def update (env: List (String × α)) (name: String) (val: α): List (String × α) :=
   (name, val) :: env
 
-def emptyEnv: List (String × α) := []
 
 -- WHNF
 mutual
@@ -155,14 +154,6 @@ def Ctx.printIfNotTrue (ctx: Ctx) (msg: String) (o?: Option Bool): Option Bool :
     o?
 
 
-def emptyCtx: Ctx := {
-  maxN := 5,
-  debug := true,
-
-  k := 0,
-  ρ := emptyEnv,
-  Γ := emptyEnv
-}
 
 mutual
 partial def checkTypLevel? (ctx: Ctx) (exp: Exp) (maxN: Nat): Option Nat :=
@@ -255,11 +246,19 @@ namespace EL2
 
 open Typer
 
-def typeCheck? (exp: Exp) (type: Exp): Option Bool := do
+
+def typeCheck? (exp: Exp) (type: Exp) (maxN: Nat := 5) (debug : Bool := true): Option Bool := do
   -- typeCheck?
   -- some false - type check error
   -- none - parse error
-  checkExp? emptyCtx exp (← eval? emptyEnv type)
+  checkExp? {
+    maxN := maxN,
+    debug := debug,
+
+    k := 0,
+    ρ := [],
+    Γ := []
+  } exp (← eval? [] type)
 
 def test1 :=
   typeCheck?
