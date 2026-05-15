@@ -57,19 +57,20 @@ def emptyEnv: List (String × α) := []
 
 -- WHNF
 mutual
-partial def whnf? (cmd: Val) (arg: Val): Option Val := do
+partial def whnf? (cmd: Val) (arg: Val): Option Val :=
+  -- weak head normal form
   -- reduce (Val.app cmd arg)
   match cmd with
     | Val.clos env (Exp.lam name body) =>
       eval? (update env name arg) body
-
-    | _ => -- cannot reduce
-      pure (Val.app cmd arg)
+    | _ =>
+      (Val.app cmd arg)
 
 partial def eval? (env: List (String × Val)) (exp: Exp): Option Val := do
   -- reduce (Val.clos env exp)
   match exp with
-    | Exp.typ n => pure (Val.typ n)
+    | Exp.typ n =>
+      pure (Val.typ n)
 
     | Exp.var name =>
       lookup? env name
@@ -80,13 +81,15 @@ partial def eval? (env: List (String × Val)) (exp: Exp): Option Val := do
     | Exp.bnd name val _ body =>
       eval? (update env name (← eval? env val)) body
 
-    | _ => pure (Val.clos env exp) -- skip lam pi inh
+    | _ =>
+      pure (Val.clos env exp) -- skip lam pi inh
 end
 
 -- DEFINITIONAL EQUALITY
 partial def eqVal? (k: Nat) (u1: Val) (u2: Val): Option Bool := do
     match (u1, u2) with
-      | (Val.typ n1, Val.typ n2) => pure (n1 = n2)
+      | (Val.typ n1, Val.typ n2) =>
+        pure (n1 = n2)
 
       | (Val.gen k1, Val.gen k2) =>
         pure (k1 = k2)
@@ -95,20 +98,18 @@ partial def eqVal? (k: Nat) (u1: Val) (u2: Val): Option Bool := do
         pure ((← eqVal? k cmd1 cmd2) ∧ (← eqVal? k arg1 arg2))
 
       | (Val.clos env1 (Exp.lam name1 body1), Val.clos env2 (Exp.lam name2 body2)) =>
-        let v := Val.gen k
         eqVal? (k + 1)
-          (← eval? (update env1 name1 v) body1)
-          (← eval? (update env2 name2 v) body2)
+          (← eval? (update env1 name1 (Val.gen k)) body1)
+          (← eval? (update env2 name2 (Val.gen k)) body2)
 
       | (Val.clos env1 (Exp.pi name1 typeA1 typeB1), Val.clos env2 (Exp.pi name2 typeA2 typeB2)) =>
-        let v := Val.gen k
         pure (
           (← eqVal? k (← eval? env1 typeA1) (← eval? env2 typeA2))
             ∧
           (
             ← eqVal? (k + 1)
-            (← eval? (update env1 name1 v) typeB1)
-            (← eval? (update env2 name2 v) typeB2)
+            (← eval? (update env1 name1 (Val.gen k)) typeB1)
+            (← eval? (update env2 name2 (Val.gen k)) typeB2)
           )
         )
 
