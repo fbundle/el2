@@ -156,23 +156,8 @@ def Ctx.printIfNotTrue (ctx: Ctx) (msg: String) (o?: Option Bool): Option Bool :
 
 
 mutual
-partial def checkTypLevel? (ctx: Ctx) (exp: Exp) (maxN: Nat): Option Nat :=
-  -- if exp is of type TypeN for 0 ≤ N ≤ maxN
-  -- return N
-  ctx.printIfNone s!"[DBG_TRACE] checkTypLevel? {repr ctx}\n\texp = {repr exp}\n\tmaxLevel = {maxN}" do
-  let rec loop (n: Nat): Option Nat := do
-    if n > maxN then
-      none
-    else
-      let b ← checkExp? ctx.nodebug exp (Val.typ n)
-      if b then
-        pure n
-      else
-        loop (n + 1)
-  loop 0
-
 partial def inferExpWeak? (ctx: Ctx) (exp: Exp): Option Val :=
-  -- infer the type of exp weakly
+  -- infer the type of exp
   ctx.printIfNone s!"[DBG_TRACE] inferExpWeak? {repr ctx}\n\texp = {repr exp}" do
     match exp with
       | Exp.typ n => pure (Val.typ (n + 1))
@@ -190,6 +175,24 @@ partial def inferExpWeak? (ctx: Ctx) (exp: Exp): Option Val :=
           | _ => none
 
       | _ => none -- ignore these
+
+partial def checkTypLevel? (ctx: Ctx) (exp: Exp) (maxN: Nat): Option Nat :=
+  -- if exp: TypeN return N
+  -- if it cannot be infered, we run a finite loop up to maxN
+  ctx.printIfNone s!"[DBG_TRACE] checkTypLevel? {repr ctx}\n\texp = {repr exp}\n\tmaxLevel = {maxN}" do
+  let rec loop (n: Nat): Option Nat := do
+    if n > maxN then
+      none
+    else
+      let b ← checkExp? ctx.nodebug exp (Val.typ n)
+      if b then
+        pure n
+      else
+        loop (n + 1)
+
+  match inferExpWeak? ctx exp with
+    | some (Val.typ n) => pure n
+    | _ => loop 0
 
 partial def checkExp? (ctx: Ctx) (exp: Exp) (val: Val): Option Bool :=
   -- check if type of exp is val
