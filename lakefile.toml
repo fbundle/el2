@@ -1,6 +1,6 @@
 name = "el"
 version = "0.1.0"
-defaultTargets = ["Main.lean"]
+defaultTargets = ["CheckAndReduce.lean"]
 
 
 [[lean_lib]]

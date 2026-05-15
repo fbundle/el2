@@ -143,12 +143,12 @@ def Ctx.intro (ctx: Ctx) (name: String) (type: Val) : Ctx × Val :=
 def Ctx.nodebug (ctx: Ctx) : Ctx :=
   {ctx with debug := false}
 
-def Ctx.printNone (ctx: Ctx) (msg: String) (o?: Option α): Option α :=
+def Ctx.printIfNone (ctx: Ctx) (msg: String) (o?: Option α): Option α :=
   match (o?, ctx.debug) with
     | (none, true) => dbg_trace msg; none
     | _ => o?
 
-def Ctx.printFalse (ctx: Ctx) (msg: String) (o?: Option Bool): Option Bool :=
+def Ctx.printIfFalse (ctx: Ctx) (msg: String) (o?: Option Bool): Option Bool :=
   if (o? ≠ true) ∧ (ctx.debug) then
     dbg_trace msg; none
   else
@@ -168,7 +168,7 @@ mutual
 partial def checkTypLevel? (ctx: Ctx) (exp: Exp) (maxN: Nat): Option Nat :=
   -- if exp is of type TypeN for 0 ≤ N ≤ maxN
   -- return N
-  ctx.printNone s!"[DBG_TRACE] checkTypLevel? {repr ctx}\n\texp = {repr exp}\n\tmaxLevel = {maxN}" do
+  ctx.printIfNone s!"[DBG_TRACE] checkTypLevel? {repr ctx}\n\texp = {repr exp}\n\tmaxLevel = {maxN}" do
   let rec loop (n: Nat): Option Nat := do
     if n > maxN then
       none
@@ -182,7 +182,7 @@ partial def checkTypLevel? (ctx: Ctx) (exp: Exp) (maxN: Nat): Option Nat :=
 
 partial def inferExpWeak? (ctx: Ctx) (exp: Exp): Option Val :=
   -- infer the type of exp weakly
-  ctx.printNone s!"[DBG_TRACE] inferExpWeak? {repr ctx}\n\texp = {repr exp}" do
+  ctx.printIfNone s!"[DBG_TRACE] inferExpWeak? {repr ctx}\n\texp = {repr exp}" do
     match exp with
       | Exp.typ n => pure (Val.typ (n + 1))
       | Exp.var name => lookup? ctx.Γ name
@@ -202,8 +202,8 @@ partial def inferExpWeak? (ctx: Ctx) (exp: Exp): Option Val :=
 
 partial def checkExp? (ctx: Ctx) (exp: Exp) (val: Val): Option Bool :=
   -- check if type of exp is val
-  -- ctx.printFalse s!"[DBG_TRACE] checkExp? {repr ctx}\n\texp = {repr exp}\n\tval = {repr val}" do
-  ctx.printFalse s!"[DBG_TRACE] checkExp? \n\texp = {repr exp}\n\tval = {repr val}" do
+  -- ctx.printIfFalse s!"[DBG_TRACE] checkExp? {repr ctx}\n\texp = {repr exp}\n\tval = {repr val}" do
+  ctx.printIfFalse s!"[DBG_TRACE] checkExp? \n\texp = {repr exp}\n\tval = {repr val}" do
     match exp with
       | Exp.pi name typeA typeB =>
         match val with
