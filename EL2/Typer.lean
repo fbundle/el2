@@ -133,13 +133,12 @@ def Ctx.bind (ctx: Ctx) (name: String) (val: Val) (type: Val) : Ctx :=
   }
 
 def Ctx.intro (ctx: Ctx) (name: String) (type: Val) : Ctx × Val :=
-  let val := Val.gen ctx.k
   ({
     ctx with
     k := ctx.k + 1,
-    ρ := update ctx.ρ name val,
+    ρ := update ctx.ρ name (Val.gen ctx.k),
     Γ := update ctx.Γ name type,
-  }, val)
+  }, Val.gen ctx.k)
 
 def Ctx.nodebug (ctx: Ctx) : Ctx :=
   {ctx with debug := false}
