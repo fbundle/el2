@@ -148,7 +148,7 @@ def Ctx.printIfNone (ctx: Ctx) (msg: String) (o?: Option α): Option α :=
     | (none, true) => dbg_trace msg; none
     | _ => o?
 
-def Ctx.printIfFalse (ctx: Ctx) (msg: String) (o?: Option Bool): Option Bool :=
+def Ctx.printIfNotTrue (ctx: Ctx) (msg: String) (o?: Option Bool): Option Bool :=
   if (o? ≠ true) ∧ (ctx.debug) then
     dbg_trace msg; none
   else
@@ -202,8 +202,8 @@ partial def inferExpWeak? (ctx: Ctx) (exp: Exp): Option Val :=
 
 partial def checkExp? (ctx: Ctx) (exp: Exp) (val: Val): Option Bool :=
   -- check if type of exp is val
-  -- ctx.printIfFalse s!"[DBG_TRACE] checkExp? {repr ctx}\n\texp = {repr exp}\n\tval = {repr val}" do
-  ctx.printIfFalse s!"[DBG_TRACE] checkExp? \n\texp = {repr exp}\n\tval = {repr val}" do
+  -- ctx.printIfNotTrue s!"[DBG_TRACE] checkExp? {repr ctx}\n\texp = {repr exp}\n\tval = {repr val}" do
+  ctx.printIfNotTrue s!"[DBG_TRACE] checkExp? \n\texp = {repr exp}\n\tval = {repr val}" do
     match exp with
       | Exp.pi name typeA typeB =>
         match val with
