@@ -184,8 +184,7 @@ partial def checkTypLevel? (ctx: Ctx) (exp: Exp) (maxN: Nat): Option Nat :=
     if n > maxN then
       none
     else
-      let b ← checkExp? ctx.nodebug exp (Val.typ n)
-      if b then
+      if (← checkExp? ctx.nodebug exp (Val.typ n)) then
         pure n
       else
         loop (n + 1)
